@@ -1,0 +1,71 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  padding: 5px;
+  width: 300px;
+}
+.flex {
+  display: flex;
+}
+.hide {
+  display: none;
+}
+.wrapper {
+  max-width: 500px;
+}
+.color_input_label {
+  display: block;
+}
+.color_input_colorBlock {
+  width: 40px;
+  border-radius: 5px;
+  border: 2px solid #e1e2e6;
+  height: 29px;
+}
+.color_input_btn {
+  margin-top: 10px;
+}
+.color_input_input, .color_result_input {
+  margin: 0;
+  padding: 0 0 0 5px;
+  flex-grow: 1;
+  margin-right: 10px;
+  outline: none;
+  border: 2px solid #e1e2e6;
+  height: 29px;
+}
+.color-resultContainer {
+  margin-top: 10px;
+}
+
+.color_result_icon {
+  animation: spin-animate 1s linear infinite;
+  transform: rotate(90deg);
+}
+@keyframes spin-animate {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.color_result_btn, .color_input_btn {
+  height: 29px;
+  outline:none;
+  min-width: 50px;
+  padding: 0;
+  border: 3px solid transparent;
+  cursor: pointer;
+  padding: 0 10px;
+  border-radius: 4px;
+  transition: 0.2s linear;
+}
+.color_result_btn:hover , .color_input_btn:hover {
+  border-color: #dddddd;
+  background-color: transparent;
+}
+.error {
+  color: red;
+}

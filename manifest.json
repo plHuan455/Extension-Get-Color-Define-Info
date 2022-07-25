@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Nova Define Color",
+  "version": "1.0",
+  "description": "Fast get color define information for colors file",
+  "icons": {
+    "16": "logo.png"
+  },
+  "action":{
+    "default_icon": "logo.png",
+    "default_popup": "popup.html"
+  }
+}
