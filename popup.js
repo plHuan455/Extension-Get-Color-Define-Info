@@ -119,7 +119,7 @@ async function main(){
   }
   static getColorDefine(colorName, rgbList, colorHex){
     colorName = colorName
-    .replace(/\s\(\w+\)/g, '')
+    .replace(/(\s\(\w+\))|\'/g, '')
     .replace(/\s/g, '-').toLowerCase();
     return `$${colorName}: rgb(${rgbList.join(', ')}); \/\/ ${colorHex}`; 
   }
