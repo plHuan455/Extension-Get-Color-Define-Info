@@ -1,9 +1,18 @@
+let isCopied = false;
+
 const buttonElement = document.querySelector('#getColorBtn');
 const inputElement = document.querySelector('#colorInput');
 const resultElement = document.querySelector('#result');
 const copyBtnElement = document.querySelector('#copyBtn');
 const errorElement = document.querySelector('#error');
 const colorBlockElement = document.querySelector('#color-block');
+
+window.addEventListener('blur', ()=> {
+  if(!isCopied)
+    storeDataToLocalStorage();
+})
+getDataFromLocalStorage();
+
 inputElement.focus();
 inputElement.addEventListener('keydown', (e)=>{
   if(e.code === 'Enter') main();
@@ -20,8 +29,11 @@ resultElement.addEventListener('keyup', (e)=>{
     handleCopyClipBoard(true)
   }
 })
-copyBtnElement.addEventListener('click', ()=>{handleCopyClipBoard(true)});
-  
+copyBtnElement.addEventListener('click', ()=>{
+  LocalStorage.clear();
+  isCopied = true;
+  handleCopyClipBoard(true)
+});
 async function main(){
   try{
     const color = new Color(inputElement.value);
@@ -36,19 +48,19 @@ async function main(){
       resultElement.value = result;   
       resultElement.focus();
     }
-  }catch(err){
-    handleError(err);
-  }
+    }catch(err){
+      handleError(err);
+    }
   }
   async function fetchData(hexColor){
-  const url = `https://color-parse.herokuapp.com/https://hexcol.com/color/${hexColor}`
-  const response = await fetch(url).then(data=>data.text())
-  return response;
+    const url = `https://color-parse.herokuapp.com/https://hexcol.com/color/${hexColor}`
+    const response = await fetch(url).then(data=>data.text())
+    return response;
   }
   function prefixInput(inputValue){
   // TODO prefix rgb
-  let preFix = inputValue.replace(/[\s\n\#]+/g, '');
-  return preFix;
+    let preFix = inputValue.replace(/[\s\n\#]+/g, '');
+    return preFix;
   }
   function getColorInfo(htmlStr){
   if(htmlStr.length < 30000){
@@ -61,13 +73,14 @@ async function main(){
   return {colorName, rgbList};
   }
   function getResult(colorName, rgbList, colorHex){
-  // TODO: refix colorName ['Medium Violet-Red', 'Red', 'Pictor Blue', 'Green (Crayola)', 'Dark Slate Blue']
-  colorName = colorName
-    .replace(/\s\(\w+\)/g, '')
-    .replace(/\s/, '-').toLowerCase();
-  return `$${colorName}: rgb(${rgbList.join(', ')}); \/\/ ${colorHex}`;
+    // TODO: refix colorName ['Medium Violet-Red', 'Red', 'Pictor Blue', 'Green (Crayola)', 'Dark Slate Blue']
+    colorName = colorName
+      .replace(/\s\(\w+\)/g, '')
+      .replace(/\s/, '-').toLowerCase();
+    return `$${colorName}: rgb(${rgbList.join(', ')}); \/\/ ${colorHex}`;
   }
   function handleError(error){
+    console.error(error)
     errorElement.textContent = typeof error === 'string' ? error : '!ERROR'
   }
   function handleLoad(isLoad){
@@ -81,22 +94,37 @@ async function main(){
   }
   function handleCopyClipBoard(isCopy){
     copyBtnElement.textContent = isCopy ? 'Copied': 'Copy';
-  if(isCopy){
-    navigator.clipboard.writeText(resultElement.value);
-  }
+    if(isCopy){
+      navigator.clipboard.writeText(resultElement.value);
+    }
   }
   
   function handleChangePreviewColor(colorStr){
-  if(colorStr.match(/rgb|#/g) === null) colorStr = `#${colorStr.replace(/[\n\s]+/g, '')}`;
-  if(Color.isColor(colorStr)){
-    colorBlockElement.style.backgroundColor = colorStr;
+    if(colorStr.match(/rgb|#/g) === null) colorStr = `#${colorStr.replace(/[\n\s]+/g, '')}`;
+    if(Color.isColor(colorStr)){
+      colorBlockElement.style.backgroundColor = colorStr;
+    }
+    else{
+      colorBlockElement.style.backgroundColor = 'transparent';
+    }
   }
-  else{
-    colorBlockElement.style.backgroundColor = 'transparent';
+
+function getDataFromLocalStorage(){
+  const data = LocalStorage.getData();
+  if(data){
+    inputElement.value = data.input || "";
+    resultElement.value = data.output || "";
   }
-  }
+}
+
+function storeDataToLocalStorage() {
+  LocalStorage.storeData({
+    input: inputElement.value,
+    output: resultElement.value,
+  })
+}
   
-  class Color {
+class Color {
   hex;
   constructor(inputColor){
     let preFix = inputColor.replace(/[\s\n\#]+/g, '');
@@ -126,4 +154,5 @@ async function main(){
   static isColor(colorStr){
     return CSS.supports('color', colorStr);
   }
-  }
+}
+  
