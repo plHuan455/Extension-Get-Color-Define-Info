@@ -69,3 +69,7 @@ body {
 .error {
   color: red;
 }
+.success {
+  color: #198754;
+  font-weight: bold;
+}

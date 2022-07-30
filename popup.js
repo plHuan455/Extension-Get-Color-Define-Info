@@ -6,34 +6,43 @@ const resultElement = document.querySelector('#result');
 const copyBtnElement = document.querySelector('#copyBtn');
 const errorElement = document.querySelector('#error');
 const colorBlockElement = document.querySelector('#color-block');
+const successElement = document.querySelector('#success');
 
 window.addEventListener('blur', ()=> {
   if(!isCopied)
     storeDataToLocalStorage();
 })
+
 getDataFromLocalStorage();
 
-inputElement.focus();
+inputElement.select();
+
 inputElement.addEventListener('keydown', (e)=>{
   if(e.code === 'Enter') main();
   if(errorElement.textContent) errorElement.textContent = '';
+  if(successElement.textContent) successElement.textContent = '';
 });
+
 inputElement.addEventListener('change', (e)=>{
   handleChangePreviewColor(e.target.value);
 })
+
 buttonElement.addEventListener('click', ()=>{
   main()
 });
+
 resultElement.addEventListener('keyup', (e)=>{
   if(e.code === 'Enter') {
     handleCopyClipBoard(true)
   }
 })
+
 copyBtnElement.addEventListener('click', ()=>{
   LocalStorage.clear();
   isCopied = true;
   handleCopyClipBoard(true)
 });
+
 async function main(){
   try{
     const color = new Color(inputElement.value);
@@ -41,28 +50,36 @@ async function main(){
     const hexColor = color.hex;
     if(hexColor) {
       handleLoad(true);
-      const response = await fetchData(hexColor)
+
+      const response = await fetchData(hexColor);
+
       handleLoad(false);
+
       const {colorName, rgbList} = getColorInfo(response);
       const result = Color.getColorDefine(colorName, rgbList, `#${hexColor}`)
       resultElement.value = result;   
-      resultElement.focus();
+      resultElement.select();
+
+      handleSuccess(result, true);
     }
     }catch(err){
       handleError(err);
     }
   }
-  async function fetchData(hexColor){
-    const url = `https://color-parse.herokuapp.com/https://hexcol.com/color/${hexColor}`
-    const response = await fetch(url).then(data=>data.text())
-    return response;
-  }
-  function prefixInput(inputValue){
-  // TODO prefix rgb
-    let preFix = inputValue.replace(/[\s\n\#]+/g, '');
-    return preFix;
-  }
-  function getColorInfo(htmlStr){
+
+async function fetchData(hexColor){
+  const url = `https://color-parse.herokuapp.com/https://hexcol.com/color/${hexColor}`
+  const response = await fetch(url).then(data=>data.text())
+  return response;
+}
+
+function prefixInput(inputValue){
+// TODO prefix rgb
+  let preFix = inputValue.replace(/[\s\n\#]+/g, '');
+  return preFix;
+}
+
+function getColorInfo(htmlStr){
   if(htmlStr.length < 30000){
     throw 'Not Found';
   }
@@ -71,43 +88,59 @@ async function main(){
   const colorName = htmlStr.match(/(?<=[^\>]+text-muted[^\>]+>)[^</^\n]+(?=<\/)/g)[0];
   const rgbList = [...htmlStr.match(/(?<=([^>]+minBox[^>]+>))\d+(?=<\/)/g)];
   return {colorName, rgbList};
+}
+
+function getResult(colorName, rgbList, colorHex){
+  // TODO: refix colorName ['Medium Violet-Red', 'Midnight Green (Eagle Green) #124555', 'Red', 'Pictor Blue', 'Green (Crayola)', 'Dark Slate Blue']
+  colorName = colorName
+    .replace(/\'/g, '')
+    .replace(/\s/g, '-').toLowerCase();
+  return `$${colorName}: rgb(${rgbList.join(', ')}); \/\/ ${colorHex}`;
+}
+
+function handleError(error){
+  errorElement.textContent = typeof error === 'string' ? error : '!ERROR'
+}
+
+function handleSuccess(result, isSuccess){
+  if(!isSuccess) {
+    successElement.textContent = "";
+    return;
   }
-  function getResult(colorName, rgbList, colorHex){
-    // TODO: refix colorName ['Medium Violet-Red', 'Red', 'Pictor Blue', 'Green (Crayola)', 'Dark Slate Blue']
-    colorName = colorName
-      .replace(/\s\(\w+\)/g, '')
-      .replace(/\s/, '-').toLowerCase();
-    return `$${colorName}: rgb(${rgbList.join(', ')}); \/\/ ${colorHex}`;
+  const reg = /\([^\)]+\)[^:]*(?=\:)/g
+  if(result.match(reg) !== null) {
+    successElement.textContent = "Check lại tên biến!";
+  }else {
+    successElement.textContent = "OK";
   }
-  function handleError(error){
-    console.error(error)
-    errorElement.textContent = typeof error === 'string' ? error : '!ERROR'
+}
+
+function handleLoad(isLoad){
+const loadElement = document.querySelector('#load')
+if(isLoad){
+  loadElement.classList.remove('hide');
+}
+else {
+  loadElement.classList.add('hide');
+}
+}
+
+function handleCopyClipBoard(isCopy){
+  copyBtnElement.textContent = isCopy ? 'Copied': 'Copy';
+  if(isCopy){
+    navigator.clipboard.writeText(resultElement.value);
   }
-  function handleLoad(isLoad){
-  const loadElement = document.querySelector('#load')
-  if(isLoad){
-    loadElement.classList.remove('hide');
+}
+
+function handleChangePreviewColor(colorStr){
+  if(colorStr.match(/rgb|#/g) === null) colorStr = `#${colorStr.replace(/[\n\s]+/g, '')}`;
+  if(Color.isColor(colorStr)){
+    colorBlockElement.style.backgroundColor = colorStr;
   }
-  else {
-    loadElement.classList.add('hide');
+  else{
+    colorBlockElement.style.backgroundColor = 'transparent';
   }
-  }
-  function handleCopyClipBoard(isCopy){
-    copyBtnElement.textContent = isCopy ? 'Copied': 'Copy';
-    if(isCopy){
-      navigator.clipboard.writeText(resultElement.value);
-    }
-  }
-  
-  function handleChangePreviewColor(colorStr){
-    if(colorStr.match(/rgb|#/g) === null) colorStr = `#${colorStr.replace(/[\n\s]+/g, '')}`;
-    if(Color.isColor(colorStr)){
-      colorBlockElement.style.backgroundColor = colorStr;
-    }
-    else{
-      colorBlockElement.style.backgroundColor = 'transparent';
-    }
-  }
+}
 
 function getDataFromLocalStorage(){
   const data = LocalStorage.getData();
@@ -147,7 +180,7 @@ class Color {
   }
   static getColorDefine(colorName, rgbList, colorHex){
     colorName = colorName
-    .replace(/(\s\(\w+\))|\'/g, '')
+    .replace(/\'/g, '')
     .replace(/\s/g, '-').toLowerCase();
     return `$${colorName}: rgb(${rgbList.join(', ')}); \/\/ ${colorHex}`; 
   }
