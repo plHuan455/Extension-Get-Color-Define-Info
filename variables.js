@@ -23,7 +23,7 @@ class Color {
     colorName = colorName
     .replace(/\'/g, '')
     .replace(/\s/g, '-').toLowerCase();
-    return `$${colorName}: rgb(${rgbList.join(', ')}); \/\/ ${colorHex}`; 
+    return `$${colorName}: rgb(${rgbList.join(', ')}); \/\/ #${colorHex}`; 
   }
   static isColor(colorStr){
     return CSS.supports('color', colorStr);
